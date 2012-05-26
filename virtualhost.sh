@@ -15,31 +15,43 @@ fi
 APACHE_CONFIG="/private/etc/apache2"
 APACHECTL="/usr/sbin/apachectl"
 
-/bin/echo "Adding virtual host $1"
+createVirtualHost()
+{
+	/bin/echo -n "Creating virtual host $1... "
+	date=`/bin/date`
 
-date=`/bin/date`
-
-cat << __EOF >>$APACHE_CONFIG/extra/httpd-vhosts.conf
+	cat << __EOF >>$APACHE_CONFIG/extra/httpd-vhosts.conf.bak
 # Added $date
 <VirtualHost *:80>
-  DocumentRoot "$2"
-  ServerName $1
-  <Directory "$2">
-    Options All
-    AllowOverride All
-    Order allow,deny
-    Allow from all
-  </Directory>
+	DocumentRoot "$2"
+	ServerName $1
+	<Directory "$2">
+		Options Indexes FollowSymLinks
+		AllowOverride All
+		Order allow,deny
+		Allow from all
+	</Directory>
 </VirtualHost>
 
 __EOF
+	/bin/echo "done"
 
-/bin/echo "Updating hosts"
+	/bin/echo -n "Adding new entry to hosts file... "
+	/bin/echo "127.0.0.1	$1" >> /etc/hosts.copy
+	/bin/echo "done"
 
-cat << __EOF >>/etc/hosts
-127.0.0.1 $1
-__EOF
+	/bin/echo -n "Restarting Apache... "
+	$APACHECTL graceful 1>/dev/null 2>/dev/null
+	/bin/echo "done"
+}
+usage()
+{
+	/bin/echo "Usage: sudo virtualhost.sh <ServerName> <DocumentRoot>"
+	exit 1
+}
 
-/bin/echo -n "Restarting Apache... "
-$APACHECTL graceful 1>/dev/null 2>/dev/null
-/bin/echo "done"
+if [ -z $2 ]; then
+	usage
+else
+	createVirtualHost $1 $2
+fi
