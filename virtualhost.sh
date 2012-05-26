@@ -1,4 +1,5 @@
 #!/bin/sh
+# Adapted from https://github.com/pgib/virtualhost.sh
 # No point going any farther if we're not running correctly...
 if [ `whoami` != 'root' ]; then
 	echo "virtualhost.sh requires super-user privileges to work."
@@ -20,7 +21,7 @@ createVirtualHost()
 	/bin/echo -n "Creating virtual host $1... "
 	date=`/bin/date`
 
-	cat << __EOF >>$APACHE_CONFIG/extra/httpd-vhosts.conf.bak
+	cat << __EOF >>$APACHE_CONFIG/extra/httpd-vhosts.conf
 # Added $date
 <VirtualHost *:80>
 	DocumentRoot "$2"
@@ -37,13 +38,14 @@ __EOF
 	/bin/echo "done"
 
 	/bin/echo -n "Adding new entry to hosts file... "
-	/bin/echo "127.0.0.1	$1" >> /etc/hosts.copy
+	/bin/echo "127.0.0.1	$1" >> /etc/hosts
 	/bin/echo "done"
 
 	/bin/echo -n "Restarting Apache... "
 	$APACHECTL graceful 1>/dev/null 2>/dev/null
 	/bin/echo "done"
 }
+
 usage()
 {
 	/bin/echo "Usage: sudo virtualhost.sh <ServerName> <DocumentRoot>"
