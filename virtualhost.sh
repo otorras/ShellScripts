@@ -18,14 +18,20 @@ APACHECTL="/usr/sbin/apachectl"
 
 createVirtualHost()
 {
-	/bin/echo -n "Creating virtual host $1... "
+  if ! /bin/echo $1 | grep -q -E '\.[A-Za-z]+$'; then
+    VIRTUALHOST=$1.dev
+  else
+    VIRTUALHOST=$1
+  fi
+
+	/bin/echo -n "Creating virtual host $VIRTUALHOST... "
 	date=`/bin/date`
 
 	cat << __EOF >>$APACHE_CONFIG/extra/httpd-vhosts.conf
 # Added $date
 <VirtualHost *:80>
 	DocumentRoot "$2"
-	ServerName $1
+	ServerName $VIRTUALHOST
 	<Directory "$2">
 		Options Indexes FollowSymLinks
 		AllowOverride All
@@ -38,7 +44,7 @@ __EOF
 	/bin/echo "done"
 
 	/bin/echo -n "Adding new entry to hosts file... "
-	/bin/echo "127.0.0.1	$1" >> /etc/hosts
+	/bin/echo "127.0.0.1	$VIRTUALHOST" >> /etc/hosts
 	/bin/echo "done"
 
 	/bin/echo -n "Restarting Apache... "
